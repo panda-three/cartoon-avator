@@ -49,13 +49,20 @@ export function getOpenRouterImageModel(defaultModel: string): string {
 
 export async function openRouterChatCompletions(
   payload: Record<string, unknown>,
-  { timeoutMs }: { timeoutMs: number },
+  { timeoutMs, signal }: { timeoutMs: number; signal?: AbortSignal },
 ): Promise<OpenRouterChatCompletion> {
   const apiKey = getOpenRouterApiKey()
   if (!apiKey) throw new Error("缺少 OPENROUTER_API_KEY")
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const timeoutError = Object.assign(new Error("OpenRouter 超时，请稍后重试"), { code: "OPENROUTER_TIMEOUT" })
+  const timeout = setTimeout(() => controller.abort(timeoutError), timeoutMs)
+
+  const abortFromUpstream = () => controller.abort(signal?.reason)
+  if (signal) {
+    if (signal.aborted) abortFromUpstream()
+    else signal.addEventListener("abort", abortFromUpstream, { once: true })
+  }
 
   try {
     const res = await fetch(OPENROUTER_ENDPOINT, {
@@ -72,22 +79,32 @@ export async function openRouterChatCompletions(
 
     const raw = await res.text()
     if (!res.ok) {
-      throw new Error(`OpenRouter 调用失败（${res.status}）：${raw.slice(0, 500)}`)
+      const err = Object.assign(new Error(`OpenRouter 调用失败（${res.status}）：${raw.slice(0, 500)}`), {
+        code: `OPENROUTER_HTTP_${res.status}`,
+        status: res.status,
+      })
+      throw err
     }
 
     const parsed = OpenRouterChatCompletionSchema.safeParse(JSON.parse(raw))
     if (!parsed.success) {
-      throw new Error("OpenRouter 响应解析失败")
+      throw Object.assign(new Error("OpenRouter 响应解析失败"), { code: "OPENROUTER_PARSE_ERROR" })
     }
 
     return parsed.data
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
-      throw new Error("OpenRouter 超时，请稍后重试")
+      const reason = controller.signal.reason
+      if (reason instanceof Error) throw reason
+      if (typeof reason === "string") throw Object.assign(new Error(reason), { code: "OPENROUTER_ABORTED" })
+      throw timeoutError
     }
     throw err
   } finally {
     clearTimeout(timeout)
+    if (signal && !signal.aborted) {
+      signal.removeEventListener("abort", abortFromUpstream)
+    }
   }
 }
 

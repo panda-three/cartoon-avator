@@ -16,6 +16,7 @@ import { getUserId } from "@/lib/server/auth"
 import { getEntitlementForUser } from "@/lib/server/billing-store"
 import { MAX_UPLOAD_BYTES, allowedUploadTypeLabel, isAllowedUploadMimeType } from "@/lib/images"
 import type { JobProvider } from "@/lib/jobs"
+import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
@@ -71,17 +72,21 @@ export async function POST(req: Request) {
   const entitlement = await getEntitlementForUser(userId)
   const subStatus = entitlement.subscription?.status ?? "inactive"
   if (subStatus === "inactive" || subStatus === "expired") {
+    trackEvent("job.create_blocked", { userId, reason: "subscription_inactive", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "需要订阅后才能创建任务" }, { status: 403 })
   }
   if (subStatus === "past_due") {
+    trackEvent("job.create_blocked", { userId, reason: "subscription_past_due", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "订阅扣款失败或已暂停，请先处理账单" }, { status: 403 })
   }
   if (entitlement.usage.quotaRemaining <= 0) {
+    trackEvent("job.create_blocked", { userId, reason: "quota_exhausted", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "本月额度已用完" }, { status: 403 })
   }
 
   const activeJobId = await getActiveJobIdForUser(userId)
   if (activeJobId) {
+    trackEvent("job.create_blocked", { userId, reason: "concurrency_limit", activeJobId })
     return NextResponse.json({ error: "你已有一个进行中的任务，请等待完成后再创建", activeJobId }, { status: 409 })
   }
 
@@ -121,6 +126,14 @@ export async function POST(req: Request) {
       userId,
     })
 
+    trackEvent("job.created", {
+      jobId: job.id,
+      userId,
+      stylePackId,
+      provider,
+      identityStrength,
+      source: "upload",
+    })
     enqueueJob(job.id)
     return NextResponse.json({ jobId: job.id }, { status: 201 })
   }
@@ -143,6 +156,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "源任务不存在或已被清理" }, { status: 400 })
     }
 
+    trackEvent("job.created", {
+      jobId: job.id,
+      userId,
+      stylePackId,
+      provider,
+      identityStrength,
+      source: "clone",
+      sourceJobId,
+    })
     enqueueJob(job.id)
     return NextResponse.json({ jobId: job.id }, { status: 201 })
   }

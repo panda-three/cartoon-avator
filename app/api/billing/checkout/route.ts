@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { getUserId } from "@/lib/server/auth"
 import { upsertSubscriptionForUser } from "@/lib/server/billing-store"
+import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
@@ -101,6 +102,9 @@ export async function POST(req: Request) {
   const body = BodySchema.parse(await req.json().catch(() => undefined))
   const planId = body?.planId ?? process.env.DEFAULT_PLAN_ID ?? "monthly"
   const productId = process.env.CREEM_PRODUCT_ID ?? planId
+  const mode = shouldUseMockCheckout() ? "mock" : "creem"
+
+  trackEvent("billing.checkout_requested", { userId, planId, productId, mode })
 
   if (shouldUseMockCheckout()) {
     const end = new Date()
@@ -113,11 +117,25 @@ export async function POST(req: Request) {
       currentPeriodEnd: end.toISOString(),
     })
 
+    trackEvent("billing.subscription_updated", {
+      userId,
+      provider: "mock",
+      status: "active",
+      planId,
+      currentPeriodEnd: end.toISOString(),
+    })
     return NextResponse.json({ checkoutUrl: null, subscriptionStatus: "active" })
   }
 
   if (process.env.CREEM_API_KEY) {
     if (!looksLikeCreemProductId(productId)) {
+      trackEvent("billing.checkout_failed", {
+        userId,
+        provider: "creem",
+        planId,
+        productId,
+        errorMessage: "missing_product_id",
+      })
       return NextResponse.json(
         {
           error:
@@ -128,8 +146,16 @@ export async function POST(req: Request) {
     }
     try {
       const checkoutUrl = await createCreemCheckoutUrl({ userId, productId, planId })
+      trackEvent("billing.checkout_created", { userId, provider: "creem", planId, productId })
       return NextResponse.json({ checkoutUrl })
     } catch (err) {
+      trackEvent("billing.checkout_failed", {
+        userId,
+        provider: "creem",
+        planId,
+        productId,
+        errorMessage: err instanceof Error ? err.message : "创建订阅失败",
+      })
       return NextResponse.json({ error: err instanceof Error ? err.message : "创建订阅失败" }, { status: 500 })
     }
   }
@@ -144,5 +170,6 @@ export async function POST(req: Request) {
     url.searchParams.set("return_url", process.env.CREEM_RETURN_URL)
   }
 
+  trackEvent("billing.checkout_created", { userId, provider: "creem", planId, productId, mode: "redirect_url" })
   return NextResponse.json({ checkoutUrl: url.toString() })
 }

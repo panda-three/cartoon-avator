@@ -1,6 +1,7 @@
 import crypto from "node:crypto"
 import { NextResponse } from "next/server"
 import { upsertSubscriptionForUser, type SubscriptionStatus } from "@/lib/server/billing-store"
+import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
     try {
       verifyWebhookSignature({ secret, body: rawBody, signature })
     } catch (err) {
+      trackEvent("billing.webhook_rejected", { reason: err instanceof Error ? err.message : "签名校验失败" })
       return NextResponse.json({ error: err instanceof Error ? err.message : "签名校验失败" }, { status: 401 })
     }
   }
@@ -169,6 +171,15 @@ export async function POST(req: Request) {
     asString(payload?.data?.subscriptionId) ??
     asString(payload?.data?.subscription?.id) ??
     null
+
+  trackEvent("billing.webhook_received", {
+    userId,
+    provider: "creem",
+    eventType,
+    status,
+    planId,
+    currentPeriodEnd,
+  })
 
   await upsertSubscriptionForUser(userId, {
     provider: "creem",

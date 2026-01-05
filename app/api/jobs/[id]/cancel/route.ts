@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { getJobRecord, updateJobRecord } from "@/lib/server/job-store"
+import { abortJob } from "@/lib/server/job-runner"
 import { getUserId } from "@/lib/server/auth"
+import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
@@ -30,5 +32,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     updatedAt: now,
   }))
 
+  trackEvent("job.cancel_requested", { userId, jobId: id })
+  abortJob(id, Object.assign(new Error("任务已取消"), { code: "JOB_CANCELED" }))
   return NextResponse.json({ jobId: id })
 }

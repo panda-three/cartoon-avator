@@ -21,16 +21,31 @@ function getErrorMessage(err: unknown) {
   return "未知错误"
 }
 
+function getErrorCode(err: unknown): string | undefined {
+  if (!err || typeof err !== "object") return undefined
+  const maybe = (err as { code?: unknown }).code
+  return typeof maybe === "string" ? maybe : undefined
+}
+
+function wrapError(prefix: string, err: unknown): Error {
+  const next = new Error(`${prefix}：${getErrorMessage(err)}`)
+  const code = getErrorCode(err)
+  if (code) Object.assign(next, { code })
+  return next
+}
+
 export async function generateImagesForJob({
   inputImageUrl,
   stylePackId,
   identityStrength,
   provider,
+  signal,
 }: {
   inputImageUrl: string
   stylePackId: string
   identityStrength: number
   provider: JobProvider
+  signal?: AbortSignal
 }): Promise<string[]> {
   const stylePack = getStylePackById(stylePackId)
 
@@ -77,14 +92,14 @@ export async function generateImagesForJob({
         temperature: 0.2,
         max_tokens: 500,
       },
-      { timeoutMs: 60_000 },
+      { timeoutMs: 60_000, signal },
     )
 
     const extracted = extractTextFromCompletion(descriptionCompletion).trim()
     description = extracted || null
   } catch (err) {
     if (!isModelUnsupportedError(err)) {
-      throw new Error(`视觉描述失败：${getErrorMessage(err)}`)
+      throw wrapError("视觉描述失败", err)
     }
   }
 
@@ -139,7 +154,7 @@ export async function generateImagesForJob({
           ],
           temperature: 0.9,
         },
-        { timeoutMs: 120_000 },
+        { timeoutMs: 120_000, signal },
       )
 
       return extractImageUrlsFromCompletion(completion)
@@ -147,11 +162,14 @@ export async function generateImagesForJob({
         .filter(Boolean)
     } catch (err) {
       if (isModelUnsupportedError(err)) {
-        throw new Error(
+        throw Object.assign(
+          new Error(
           "风格生图失败：当前模型不支持该请求。请在 `.env.local` 配置 `OPENROUTER_IMAGE_MODEL` 为支持图片输出的模型后重试。",
+          ),
+          { code: "MODEL_UNSUPPORTED" },
         )
       }
-      throw new Error(`风格生图失败：${getErrorMessage(err)}`)
+      throw wrapError("风格生图失败", err)
     }
   }
 

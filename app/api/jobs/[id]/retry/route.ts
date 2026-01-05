@@ -3,6 +3,7 @@ import { getActiveJobIdForUser, getJobRecord, updateJobRecord } from "@/lib/serv
 import { enqueueJob } from "@/lib/server/job-runner"
 import { getUserId } from "@/lib/server/auth"
 import { getEntitlementForUser } from "@/lib/server/billing-store"
+import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
@@ -28,17 +29,21 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const entitlement = await getEntitlementForUser(userId)
   const subStatus = entitlement.subscription?.status ?? "inactive"
   if (subStatus === "inactive" || subStatus === "expired") {
+    trackEvent("job.retry_blocked", { userId, jobId: id, reason: "subscription_inactive", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "需要订阅后才能创建任务" }, { status: 403 })
   }
   if (subStatus === "past_due") {
+    trackEvent("job.retry_blocked", { userId, jobId: id, reason: "subscription_past_due", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "订阅扣款失败或已暂停，请先处理账单" }, { status: 403 })
   }
   if (entitlement.usage.quotaRemaining <= 0) {
+    trackEvent("job.retry_blocked", { userId, jobId: id, reason: "quota_exhausted", subscriptionStatus: subStatus })
     return NextResponse.json({ error: "本月额度已用完" }, { status: 403 })
   }
 
   const activeJobId = await getActiveJobIdForUser(userId)
   if (activeJobId) {
+    trackEvent("job.retry_blocked", { userId, jobId: id, reason: "concurrency_limit", activeJobId })
     return NextResponse.json({ error: "你已有一个进行中的任务，请等待完成后再创建", activeJobId }, { status: 409 })
   }
 
@@ -53,6 +58,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     updatedAt: now,
   }))
 
+  trackEvent("job.retried", { userId, jobId: id })
   enqueueJob(id)
   return NextResponse.json({ jobId: id })
 }
