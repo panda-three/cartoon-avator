@@ -5,8 +5,9 @@ import path from "node:path"
 import { promises as fs } from "node:fs"
 import { z } from "zod"
 import { JobPublicSchema, type JobParams, type JobPublic, type JobProvider } from "@/lib/jobs"
+import { getDataDir } from "@/lib/server/data-dir"
 
-const DATA_DIR = path.join(process.cwd(), ".data")
+const DATA_DIR = getDataDir()
 const STORE_PATH = path.join(DATA_DIR, "jobs.json")
 const STORE_TMP_PATH = path.join(DATA_DIR, "jobs.json.tmp")
 
