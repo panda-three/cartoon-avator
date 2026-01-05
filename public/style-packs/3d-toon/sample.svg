@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" role="img" aria-label="3D卡通 示例图（占位）">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="25%" r="80%">
+      <stop offset="0" stop-color="#93C5FD" />
+      <stop offset="1" stop-color="#1D4ED8" />
+    </radialGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.28" />
+    </filter>
+  </defs>
+  <rect width="800" height="800" rx="72" fill="url(#bg)" />
+  <g filter="url(#softShadow)">
+    <circle cx="400" cy="404" r="182" fill="#FFFFFF" fill-opacity="0.22" />
+    <circle cx="400" cy="404" r="132" fill="#FFFFFF" fill-opacity="0.18" />
+  </g>
+  <g fill="#FFFFFF">
+    <text x="64" y="120" font-size="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="800">3D卡通</text>
+    <text x="64" y="168" font-size="22" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" opacity="0.9">style-pack sample (placeholder)</text>
+  </g>
+  <g fill="none" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="12">
+    <path d="M258 594c22-96 100-170 192-170s170 74 192 170" />
+  </g>
+</svg>
