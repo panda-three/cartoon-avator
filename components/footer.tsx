@@ -1,21 +1,31 @@
+"use client"
+
 import Link from "next/link"
 import { Sparkles, Twitter, Github, Linkedin, Youtube } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/i18n-provider"
 
 export function Footer() {
+  const { t } = useI18n()
+
+  const productItems = t("footer.products.items").split("|")
+  const resourceItems = t("footer.resources.items").split("|")
+  const companyItems = t("footer.company.items").split("|")
+  const legalItems = t("footer.legal.items").split("|")
+
   return (
     <footer className="border-t border-border bg-card/50">
       {/* CTA Section */}
       <div className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 text-balance">
-            准备好生成你的卡通头像了吗？
+            {t("footer.cta.title")}
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto text-pretty">
-            上传 1 张自拍，选择画风包，即可生成 4 张卡通形象照供挑选下载。
+            {t("footer.cta.subtitle")}
           </p>
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8" asChild>
-            <Link href="/create">开始生成</Link>
+            <Link href="/create">{t("footer.cta.button")}</Link>
           </Button>
         </div>
       </div>
@@ -30,10 +40,10 @@ export function Footer() {
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-lg text-foreground">卡通头像</span>
+                <span className="font-bold text-lg text-foreground">{t("app.name")}</span>
               </Link>
               <p className="text-sm text-muted-foreground mb-4">
-                一张自拍，多种画风。快速生成专属于你的卡通头像。
+                {t("footer.tagline")}
               </p>
               <div className="flex gap-4">
                 <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -53,9 +63,9 @@ export function Footer() {
 
             {/* Products */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Products</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t("footer.products")}</h4>
               <ul className="space-y-3">
-                {["风格包", "创建任务", "结果下载", "订阅计划"].map((item) => (
+                {productItems.map((item) => (
                   <li key={item}>
                     <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       {item}
@@ -67,9 +77,9 @@ export function Footer() {
 
             {/* Resources */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t("footer.resources")}</h4>
               <ul className="space-y-3">
-                {["Documentation", "API Reference", "Tutorials", "Blog", "Community"].map((item) => (
+                {resourceItems.map((item) => (
                   <li key={item}>
                     <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       {item}
@@ -81,9 +91,9 @@ export function Footer() {
 
             {/* Company */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Company</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t("footer.company")}</h4>
               <ul className="space-y-3">
-                {["About Us", "Careers", "Press Kit", "Contact", "Partners"].map((item) => (
+                {companyItems.map((item) => (
                   <li key={item}>
                     <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       {item}
@@ -95,9 +105,9 @@ export function Footer() {
 
             {/* Legal */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t("footer.legal")}</h4>
               <ul className="space-y-3">
-                {["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR", "Security"].map((item) => (
+                {legalItems.map((item) => (
                   <li key={item}>
                     <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       {item}
@@ -110,16 +120,18 @@ export function Footer() {
 
           {/* Bottom Bar */}
           <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">© 2026 Cartoon Avatar. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">
+              {t("footer.copyright", { year: new Date().getFullYear() })}
+            </p>
             <div className="flex items-center gap-6">
               <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Privacy
+                {t("footer.link.privacy")}
               </Link>
               <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Terms
+                {t("footer.link.terms")}
               </Link>
               <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Cookies
+                {t("footer.link.cookies")}
               </Link>
             </div>
           </div>

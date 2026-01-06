@@ -1,11 +1,15 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { getActiveStylePacks } from "@/lib/style-packs"
+import { useI18n } from "@/components/i18n-provider"
+import { getActiveStylePacks, getStylePackDescription, getStylePackName } from "@/lib/style-packs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function StylePackGallery() {
+  const { locale, t } = useI18n()
   const packs = getActiveStylePacks()
 
   return (
@@ -15,10 +19,10 @@ export function StylePackGallery() {
       <div className="max-w-7xl mx-auto relative">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 text-balance">
-            选择你的画风
+            {t("styles.title")}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            预设风格包，上传 1 张自拍，生成 4 张卡通头像供挑选。
+            {t("styles.subtitle")}
           </p>
         </div>
 
@@ -28,14 +32,14 @@ export function StylePackGallery() {
               <div className="aspect-square bg-secondary">
                 <img
                   src={pack.sampleImage}
-                  alt={`${pack.name} 示例图`}
+                  alt={t("stylePack.sampleAlt", { name: getStylePackName(pack, locale) })}
                   className="w-full h-full object-cover"
                 />
               </div>
 
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl">{pack.name}</CardTitle>
-                <CardDescription>{pack.description}</CardDescription>
+                <CardTitle className="text-xl">{getStylePackName(pack, locale)}</CardTitle>
+                <CardDescription>{getStylePackDescription(pack, locale)}</CardDescription>
               </CardHeader>
 
               <CardContent className="flex flex-wrap gap-2">
@@ -49,7 +53,7 @@ export function StylePackGallery() {
               <CardFooter className="border-t">
                 <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Link href={`/create?style=${pack.id}`}>
-                    使用此风格 <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("styles.useStyle")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>
@@ -60,4 +64,3 @@ export function StylePackGallery() {
     </section>
   )
 }
-

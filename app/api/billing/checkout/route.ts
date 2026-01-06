@@ -17,9 +17,16 @@ const CreemCheckoutResponseSchema = z.object({
   checkout_url: z.string().url(),
 })
 
+function isProductionDeploy(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production"
+  return process.env.NODE_ENV === "production"
+}
+
 function shouldUseMockCheckout() {
   if (process.env.CREEM_MOCK === "1") return true
-  return !process.env.CREEM_API_KEY && !process.env.CREEM_CHECKOUT_URL
+  const hasCreemConfig = Boolean(process.env.CREEM_API_KEY || process.env.CREEM_CHECKOUT_URL)
+  if (hasCreemConfig) return false
+  return !isProductionDeploy()
 }
 
 function looksLikeCreemProductId(value: string) {

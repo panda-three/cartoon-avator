@@ -11,6 +11,11 @@ import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
+function isProductionDeploy(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production"
+  return process.env.NODE_ENV === "production"
+}
+
 function pickProvider(): JobProvider {
   if (process.env.OPENROUTER_MOCK === "1") return "mock"
   return getOpenRouterApiKey() ? "openrouter" : "mock"
@@ -69,6 +74,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const provider = pickProvider()
+  if (provider === "mock" && process.env.OPENROUTER_MOCK !== "1" && isProductionDeploy()) {
+    trackEvent("job.clone_blocked", { userId, reason: "openrouter_unconfigured" })
+    return NextResponse.json({ error: "未配置 OPENROUTER_API_KEY，无法开始生成" }, { status: 500 })
+  }
   const job = await cloneJobFromSource({
     sourceJobId: source.id,
     stylePackId,

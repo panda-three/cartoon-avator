@@ -10,34 +10,36 @@ import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useI18n } from "@/components/i18n-provider"
 import {
   BillingPortalResponseSchema,
   BillingStatusResponseSchema,
   type BillingStatusResponse,
   type SubscriptionStatus,
 } from "@/lib/billing"
+import { localeToDateLocale } from "@/lib/i18n/locale"
 import {
   DeleteJobResponseSchema,
   DeleteJobsResponseSchema,
   ListJobsResponseSchema,
   type JobPublic,
 } from "@/lib/jobs"
-import { getStylePackById } from "@/lib/style-packs"
+import { getStylePackById, getStylePackName } from "@/lib/style-packs"
 
-function subscriptionLabel(status: SubscriptionStatus) {
+function subscriptionLabel(status: SubscriptionStatus, t: (key: any) => string) {
   switch (status) {
     case "active":
-      return "已订阅（有效）"
+      return t("billing.subscription.active")
     case "canceled":
-      return "已取消（到期前仍可用）"
+      return t("billing.subscription.canceled")
     case "past_due":
-      return "扣款失败/已暂停"
+      return t("billing.subscription.past_due")
     case "expired":
-      return "已过期"
+      return t("billing.subscription.expired")
     case "inactive":
-      return "未订阅"
+      return t("billing.subscription.inactive")
     default:
-      return "未订阅"
+      return t("billing.subscription.inactive")
   }
 }
 
@@ -55,73 +57,74 @@ function statusBadgeVariant(status: JobPublic["status"]): "default" | "secondary
   }
 }
 
-function statusLabel(status: JobPublic["status"]): string {
+function statusLabel(status: JobPublic["status"], t: (key: any) => string): string {
   switch (status) {
     case "queued":
-      return "排队中"
+      return t("status.queued")
     case "running":
-      return "生成中"
+      return t("status.running")
     case "succeeded":
-      return "已完成"
+      return t("status.succeeded")
     case "failed":
-      return "失败"
+      return t("status.failed")
     case "canceled":
-      return "已取消"
+      return t("status.canceled")
   }
 }
 
-async function fetchBillingStatus(): Promise<BillingStatusResponse> {
+async function fetchBillingStatus(opts: { fallbackErrorMessage: string }): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status", { cache: "no-store" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "获取订阅状态失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   return BillingStatusResponseSchema.parse(json)
 }
 
-async function fetchJobs(): Promise<{ jobs: JobPublic[]; retentionDays: number }> {
+async function fetchJobs(opts: { fallbackErrorMessage: string }): Promise<{ jobs: JobPublic[]; retentionDays: number }> {
   const res = await fetch("/api/jobs?limit=30", { cache: "no-store" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "获取历史记录失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   const parsed = ListJobsResponseSchema.parse(json)
   return { jobs: parsed.jobs, retentionDays: parsed.retentionDays }
 }
 
-async function fetchPortalUrl(): Promise<string | null> {
+async function fetchPortalUrl(opts: { fallbackErrorMessage: string }): Promise<string | null> {
   const res = await fetch("/api/billing/portal", { cache: "no-store" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "获取客户门户失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   return BillingPortalResponseSchema.parse(json).portalUrl
 }
 
-async function deleteJob(jobId: string): Promise<void> {
+async function deleteJob(jobId: string, opts: { fallbackErrorMessage: string }): Promise<void> {
   const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "删除失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   DeleteJobResponseSchema.parse(json)
 }
 
-async function deleteAllJobs(): Promise<number> {
+async function deleteAllJobs(opts: { fallbackErrorMessage: string }): Promise<number> {
   const res = await fetch("/api/jobs", { method: "DELETE" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "删除失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   return DeleteJobsResponseSchema.parse(json).deleted
 }
 
 export function AccountClient() {
+  const { locale, t } = useI18n()
   const [billing, setBilling] = useState<BillingStatusResponse | null>(null)
   const [jobs, setJobs] = useState<JobPublic[]>([])
   const [retentionDays, setRetentionDays] = useState(7)
@@ -134,6 +137,7 @@ export function AccountClient() {
 
   const subscriptionStatus = billing?.subscription?.status ?? "inactive"
   const quota = billing?.usage
+  const dateLocale = localeToDateLocale(locale)
 
   const canOpenPortal = useMemo(() => {
     if (!billing?.subscription) return false
@@ -142,11 +146,14 @@ export function AccountClient() {
 
   const load = useCallback(async () => {
     setError(null)
-    const [nextBilling, nextJobs] = await Promise.all([fetchBillingStatus(), fetchJobs()])
+    const [nextBilling, nextJobs] = await Promise.all([
+      fetchBillingStatus({ fallbackErrorMessage: t("pricing.client.error.fetchFailed") }),
+      fetchJobs({ fallbackErrorMessage: t("account.history.error.fetchFailed") }),
+    ])
     setBilling(nextBilling)
     setJobs(nextJobs.jobs)
     setRetentionDays(nextJobs.retentionDays)
-  }, [])
+  }, [t])
 
   useEffect(() => {
     let cancelled = false
@@ -154,7 +161,7 @@ export function AccountClient() {
       try {
         await load()
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "加载失败")
+        if (!cancelled) setError(err instanceof Error ? err.message : t("common.error.loadFailed"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -163,14 +170,14 @@ export function AccountClient() {
     return () => {
       cancelled = true
     }
-  }, [load])
+  }, [load, t])
 
   const onRefresh = async () => {
     setRefreshing(true)
     try {
       await load()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "刷新失败")
+      setError(err instanceof Error ? err.message : t("common.error.refreshFailed"))
     } finally {
       setRefreshing(false)
     }
@@ -180,13 +187,13 @@ export function AccountClient() {
     setPortalLoading(true)
     setError(null)
     try {
-      const url = await fetchPortalUrl()
+      const url = await fetchPortalUrl({ fallbackErrorMessage: t("account.subscription.error.portalFetchFailed") })
       if (!url) {
-        throw new Error("未配置客户门户入口（请设置 CREEM_CUSTOMER_PORTAL_URL 或使用 Creem API 创建门户链接）")
+        throw new Error(t("account.subscription.portalMissing"))
       }
       window.open(url, "_blank", "noopener,noreferrer")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "打开客户门户失败")
+      setError(err instanceof Error ? err.message : t("common.error.openPortalFailed"))
     } finally {
       setPortalLoading(false)
     }
@@ -196,10 +203,10 @@ export function AccountClient() {
     setDeleteLoadingId(jobId)
     setError(null)
     try {
-      await deleteJob(jobId)
+      await deleteJob(jobId, { fallbackErrorMessage: t("common.error.deleteFailed") })
       setJobs((prev) => prev.filter((job) => job.id !== jobId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : "删除失败")
+      setError(err instanceof Error ? err.message : t("common.error.deleteFailed"))
     } finally {
       setDeleteLoadingId(null)
     }
@@ -209,10 +216,10 @@ export function AccountClient() {
     setDeleteAllLoading(true)
     setError(null)
     try {
-      await deleteAllJobs()
+      await deleteAllJobs({ fallbackErrorMessage: t("common.error.deleteFailed") })
       setJobs([])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "删除失败")
+      setError(err instanceof Error ? err.message : t("common.error.deleteFailed"))
     } finally {
       setDeleteAllLoading(false)
     }
@@ -227,18 +234,18 @@ export function AccountClient() {
 
       return {
         job,
-        packName: pack?.name ?? job.stylePackId,
-        createdAtLabel: createdAt ? createdAt.toLocaleString() : job.createdAt,
-        expiresAtLabel: expiresAt ? expiresAt.toLocaleDateString() : null,
+        packName: pack ? getStylePackName(pack, locale) : job.stylePackId,
+        createdAtLabel: createdAt ? createdAt.toLocaleString(dateLocale) : job.createdAt,
+        expiresAtLabel: expiresAt ? expiresAt.toLocaleDateString(dateLocale) : null,
       }
     })
-  }, [jobs, retentionDays])
+  }, [dateLocale, jobs, locale, retentionDays])
 
   return (
     <div className="space-y-6">
       {error ? (
         <Alert variant="destructive">
-          <AlertTitle>操作失败</AlertTitle>
+          <AlertTitle>{t("account.alert.error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
@@ -246,12 +253,12 @@ export function AccountClient() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>订阅状态</CardTitle>
-            <CardDescription>订阅有效且额度充足时可创建任务</CardDescription>
+            <CardTitle>{t("account.subscription.title")}</CardTitle>
+            <CardDescription>{t("account.subscription.subtitle")}</CardDescription>
             <CardAction className="flex gap-2">
               {subscriptionStatus === "inactive" || subscriptionStatus === "expired" || subscriptionStatus === "past_due" ? (
                 <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-                  <Link href="/pricing">前往订阅</Link>
+                  <Link href="/pricing">{t("account.cta.pricing")}</Link>
                 </Button>
               ) : null}
               <Button
@@ -262,7 +269,7 @@ export function AccountClient() {
                 disabled={!canOpenPortal || portalLoading}
               >
                 {portalLoading ? <Spinner className="mr-2" /> : <ExternalLink className="mr-2 size-4" />}
-                客户门户
+                {t("account.subscription.portal")}
               </Button>
             </CardAction>
           </CardHeader>
@@ -270,25 +277,29 @@ export function AccountClient() {
             {loading ? (
               <div className="flex items-center gap-2">
                 <Spinner />
-                <span>正在获取订阅状态…</span>
+                <span>{t("account.subscription.loading")}</span>
               </div>
             ) : (
               <>
                 <div>
-                  当前状态：<span className="text-foreground">{subscriptionLabel(subscriptionStatus)}</span>
+                  {t("account.subscription.status", { status: subscriptionLabel(subscriptionStatus, t) })}
                 </div>
                 {billing?.subscription?.currentPeriodEnd ? (
-                  <div>到期时间：{new Date(billing.subscription.currentPeriodEnd).toLocaleString()}</div>
+                  <div>
+                    {t("account.subscription.periodEnd", {
+                      time: new Date(billing.subscription.currentPeriodEnd).toLocaleString(dateLocale),
+                    })}
+                  </div>
                 ) : null}
                 {billing?.activeJobId ? (
                   <div>
-                    进行中任务：{" "}
+                    {t("account.subscription.activeJobLabel")}{" "}
                     <Link href={`/jobs/${billing.activeJobId}`} className="underline text-foreground">
                       {billing.activeJobId}
                     </Link>
                   </div>
                 ) : null}
-                {!canOpenPortal ? <div>提示：mock 订阅或未接入 Creem 时无客户门户入口。</div> : null}
+                {!canOpenPortal ? <div>{t("account.subscription.portalHint")}</div> : null}
               </>
             )}
           </CardContent>
@@ -296,11 +307,11 @@ export function AccountClient() {
 
         <Card>
           <CardHeader>
-            <CardTitle>当月额度</CardTitle>
-            <CardDescription>生成成功后扣减；失败不扣</CardDescription>
+            <CardTitle>{t("account.quota.title")}</CardTitle>
+            <CardDescription>{t("account.quota.subtitle")}</CardDescription>
             <CardAction>
               <Button size="sm" variant="outline" className="bg-transparent" asChild>
-                <Link href="/create">去创建</Link>
+                <Link href="/create">{t("common.goCreate")}</Link>
               </Button>
             </CardAction>
           </CardHeader>
@@ -308,21 +319,24 @@ export function AccountClient() {
             {loading ? (
               <div className="flex items-center gap-2">
                 <Spinner />
-                <span>正在获取额度信息…</span>
+                <span>{t("account.quota.loading")}</span>
               </div>
             ) : quota ? (
               <>
-                <div>月份：{quota.month}</div>
+                <div>{t("account.quota.month", { month: quota.month })}</div>
                 <div>
-                  使用：<span className="text-foreground">{quota.quotaUsed}</span> / {quota.quotaTotal}（剩余{" "}
-                  <span className="text-foreground">{quota.quotaRemaining}</span>）
+                  {t("account.quota.usage", {
+                    used: quota.quotaUsed,
+                    total: quota.quotaTotal,
+                    remaining: quota.quotaRemaining,
+                  })}
                 </div>
                 {billing?.canCreateJob ? null : (
-                  <div className="text-destructive">{billing?.createBlockedReason ?? "暂不可创建任务"}</div>
+                  <div className="text-destructive">{billing?.createBlockedReason ?? t("account.quota.blocked")}</div>
                 )}
               </>
             ) : (
-              <div>暂无额度信息</div>
+              <div>{t("account.quota.none")}</div>
             )}
           </CardContent>
         </Card>
@@ -330,30 +344,30 @@ export function AccountClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>历史记录</CardTitle>
-          <CardDescription>最近 30 次任务，默认保存 {retentionDays} 天（到期自动清理）</CardDescription>
+          <CardTitle>{t("account.history.title")}</CardTitle>
+          <CardDescription>{t("account.history.subtitle", { days: retentionDays })}</CardDescription>
           <CardAction className="flex gap-2">
             <Button size="sm" variant="outline" className="bg-transparent" onClick={onRefresh} disabled={refreshing}>
               {refreshing ? <Spinner className="mr-2" /> : <RefreshCcw className="mr-2 size-4" />}
-              刷新
+              {t("account.history.refresh")}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive" disabled={!jobs.length || deleteAllLoading}>
                   {deleteAllLoading ? <Spinner className="mr-2" /> : <Trash2 className="mr-2 size-4" />}
-                  删除全部
+                  {t("account.history.deleteAll")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>确认删除全部历史记录？</AlertDialogTitle>
+                  <AlertDialogTitle>{t("account.history.deleteAll.confirmTitle")}</AlertDialogTitle>
                 </AlertDialogHeader>
                 <div className="text-sm text-muted-foreground">
-                  将删除你的上传原图与生成结果（删除后不可再访问）。
+                  {t("account.history.deleteAll.confirmBody")}
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDeleteAll}>确认删除</AlertDialogAction>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDeleteAll}>{t("common.confirmDelete")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -363,19 +377,19 @@ export function AccountClient() {
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Spinner />
-              <span>正在加载历史记录…</span>
+              <span>{t("account.history.loading")}</span>
             </div>
           ) : !rows.length ? (
-            <div className="text-sm text-muted-foreground">暂无历史记录</div>
+            <div className="text-sm text-muted-foreground">{t("account.history.none")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>时间</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>风格包</TableHead>
-                  <TableHead>结果下载</TableHead>
-                  <TableHead>操作</TableHead>
+                  <TableHead>{t("account.history.table.time")}</TableHead>
+                  <TableHead>{t("account.history.table.status")}</TableHead>
+                  <TableHead>{t("account.history.table.style")}</TableHead>
+                  <TableHead>{t("account.history.table.download")}</TableHead>
+                  <TableHead>{t("account.history.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -383,10 +397,12 @@ export function AccountClient() {
                   <TableRow key={job.id}>
                     <TableCell className="text-muted-foreground">
                       <div>{createdAtLabel}</div>
-                      {expiresAtLabel ? <div className="text-xs">到期：{expiresAtLabel}</div> : null}
+                      {expiresAtLabel ? (
+                        <div className="text-xs">{t("account.history.expires", { date: expiresAtLabel })}</div>
+                      ) : null}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusBadgeVariant(job.status)}>{statusLabel(job.status)}</Badge>
+                      <Badge variant={statusBadgeVariant(job.status)}>{statusLabel(job.status, t)}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{packName}</TableCell>
                     <TableCell>
@@ -407,26 +423,26 @@ export function AccountClient() {
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" className="bg-transparent" asChild>
-                          <Link href={`/jobs/${job.id}`}>查看</Link>
+                          <Link href={`/jobs/${job.id}`}>{t("account.history.view")}</Link>
                         </Button>
 
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="sm" variant="destructive" disabled={deleteLoadingId === job.id}>
                               {deleteLoadingId === job.id ? <Spinner className="mr-2" /> : <Trash2 className="mr-2 size-4" />}
-                              删除
+                              {t("account.history.delete")}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>确认删除该任务？</AlertDialogTitle>
+                              <AlertDialogTitle>{t("account.history.delete.confirmTitle")}</AlertDialogTitle>
                             </AlertDialogHeader>
                             <div className="text-sm text-muted-foreground">
-                              将删除上传原图与生成结果（删除后不可再访问）。
+                              {t("account.history.delete.confirmBody")}
                             </div>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onDelete(job.id)}>确认删除</AlertDialogAction>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(job.id)}>{t("common.confirmDelete")}</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -442,4 +458,3 @@ export function AccountClient() {
     </div>
   )
 }
-

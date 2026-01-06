@@ -7,6 +7,11 @@ import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
+function isProductionDeploy(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production"
+  return process.env.NODE_ENV === "production"
+}
+
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const userId = await getUserId()
@@ -24,6 +29,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   if (job.status !== "failed") {
     return NextResponse.json({ error: "当前状态不可重试" }, { status: 400 })
+  }
+
+  if (job.provider === "mock" && process.env.OPENROUTER_MOCK !== "1" && isProductionDeploy()) {
+    trackEvent("job.retry_blocked", { userId, jobId: id, reason: "openrouter_unconfigured" })
+    return NextResponse.json({ error: "当前任务为 mock 任务，线上已禁用 mock 生图" }, { status: 400 })
   }
 
   const entitlement = await getEntitlementForUser(userId)

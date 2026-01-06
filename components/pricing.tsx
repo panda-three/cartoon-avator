@@ -1,16 +1,21 @@
+"use client"
+
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
-const planFeatures = [
-  "每次生成产出 4 张",
-  "同一用户同时最多 1 个任务",
-  "历史记录展示最近 30 次",
-  "默认保存 7 天，支持删除",
-]
+import { useI18n } from "@/components/i18n-provider"
 
 export function Pricing() {
+  const { t } = useI18n()
+
+  const planFeatures = [
+    t("pricing.plan.feature1"),
+    t("pricing.plan.feature2"),
+    t("pricing.plan.feature3"),
+    t("pricing.plan.feature4"),
+  ]
+
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
@@ -18,18 +23,18 @@ export function Pricing() {
       <div className="max-w-5xl mx-auto relative">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 text-balance">
-            订阅计划
+            {t("pricing.title")}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            订阅后即可创建生成任务（按月自动续费）。
+            {t("pricing.subtitle")}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <Card className="border-primary/30">
             <CardHeader>
-              <CardTitle>订阅（按月）</CardTitle>
-              <CardDescription>具体价格与月度额度在订阅页展示</CardDescription>
+              <CardTitle>{t("pricing.plan.title")}</CardTitle>
+              <CardDescription>{t("pricing.plan.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
@@ -43,24 +48,24 @@ export function Pricing() {
             </CardContent>
             <CardFooter className="border-t">
               <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/pricing">查看订阅</Link>
+                <Link href="/pricing">{t("pricing.plan.cta")}</Link>
               </Button>
             </CardFooter>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>需要更多？</CardTitle>
-              <CardDescription>后续可增加更多套餐档位</CardDescription>
+              <CardTitle>{t("pricing.more.title")}</CardTitle>
+              <CardDescription>{t("pricing.more.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                MVP 阶段先以 1–2 档订阅为主，支持画风包选择、任务队列与历史记录。
+                {t("pricing.more.body")}
               </p>
             </CardContent>
             <CardFooter className="border-t">
               <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/create">先体验创建流程</Link>
+                <Link href="/create">{t("pricing.more.cta")}</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -69,4 +74,3 @@ export function Pricing() {
     </section>
   )
 }
-

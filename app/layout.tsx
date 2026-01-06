@@ -1,41 +1,56 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
+import { cookies } from "next/headers"
+import { I18nProvider } from "@/components/i18n-provider"
+import { getMessages } from "@/lib/i18n/messages"
+import { LOCALE_COOKIE, localeToHtmlLang, normalizeLocale } from "@/lib/i18n/locale"
 import "./globals.css"
 
-export const metadata: Metadata = {
-  title: "卡通头像：一张自拍生成专属形象",
-  description:
-    "上传 1 张自拍，选择预设画风包，生成 4 张卡通形象照供挑选下载。",
-  generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies()
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value)
+  const messages = getMessages(locale)
+
+  return {
+    title: messages["meta.title"],
+    description: messages["meta.description"],
+    generator: "v0.app",
+    icons: {
+      icon: [
+        {
+          url: "/icon-light-32x32.png",
+          media: "(prefers-color-scheme: light)",
+        },
+        {
+          url: "/icon-dark-32x32.png",
+          media: "(prefers-color-scheme: dark)",
+        },
+        {
+          url: "/icon.svg",
+          type: "image/svg+xml",
+        },
+      ],
+      apple: "/apple-icon.png",
+    },
+  }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value)
+  const messages = getMessages(locale)
+
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang={localeToHtmlLang(locale)} className="dark">
       <body className={`font-sans antialiased`}>
-        {children}
+        <I18nProvider locale={locale} messages={messages}>
+          {children}
+        </I18nProvider>
         <Analytics />
       </body>
     </html>

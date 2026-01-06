@@ -6,6 +6,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useI18n } from "@/components/i18n-provider"
 
 export default function GlobalError({
   error,
@@ -14,6 +15,8 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useI18n()
+
   useEffect(() => {
     console.error(error)
   }, [error])
@@ -24,23 +27,23 @@ export default function GlobalError({
       <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto space-y-6">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 text-balance">页面出错了</h1>
-            <p className="text-muted-foreground">可以尝试刷新或返回首页继续使用。</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 text-balance">{t("error.title")}</h1>
+            <p className="text-muted-foreground">{t("error.subtitle")}</p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>错误信息</CardTitle>
+              <CardTitle>{t("error.details")}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground break-words">{error.message || "未知错误"}</CardContent>
+            <CardContent className="text-sm text-muted-foreground break-words">{error.message || t("error.unknown")}</CardContent>
           </Card>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={reset}>
-              重试
+              {t("error.retry")}
             </Button>
             <Button variant="outline" className="bg-transparent" asChild>
-              <Link href="/">返回首页</Link>
+              <Link href="/">{t("common.backHome")}</Link>
             </Button>
           </div>
         </div>
@@ -49,4 +52,3 @@ export default function GlobalError({
     </div>
   )
 }
-

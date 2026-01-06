@@ -1,7 +1,9 @@
+import type { Locale } from "@/lib/i18n/locale"
+
 type StylePackBase = {
   id: string
-  name: string
-  description: string
+  name: Record<Locale, string>
+  description: Record<Locale, string>
   tags: string[]
   sampleImage: string
   isActive: boolean
@@ -16,8 +18,8 @@ type StylePackBase = {
 export const stylePacks = [
   {
     id: "anime-line",
-    name: "日漫清线",
-    description: "线稿清晰、轻上色，适合头像与社交头像。",
+    name: { en: "Anime Line Art", zh: "日漫清线" },
+    description: { en: "Clean linework with light colors. Great for profile photos.", zh: "线稿清晰、轻上色，适合头像与社交头像。" },
     tags: ["anime", "line"],
     sampleImage: "/style-packs/anime-line/sample.svg",
     isActive: true,
@@ -27,8 +29,8 @@ export const stylePacks = [
   },
   {
     id: "anime-cel",
-    name: "日漫赛璐璐",
-    description: "高对比、色块分明的赛璐璐上色风格。",
+    name: { en: "Anime Cel Shading", zh: "日漫赛璐璐" },
+    description: { en: "High contrast with crisp color blocks and clean edges.", zh: "高对比、色块分明的赛璐璐上色风格。" },
     tags: ["anime", "cel"],
     sampleImage: "/style-packs/anime-cel/sample.svg",
     isActive: true,
@@ -38,8 +40,8 @@ export const stylePacks = [
   },
   {
     id: "chibi",
-    name: "Q 版大头",
-    description: "可爱夸张比例，更适合头像场景。",
+    name: { en: "Chibi", zh: "Q 版大头" },
+    description: { en: "Cute proportions with an oversized head, perfect for avatars.", zh: "可爱夸张比例，更适合头像场景。" },
     tags: ["chibi", "cute"],
     sampleImage: "/style-packs/chibi/sample.svg",
     isActive: true,
@@ -49,8 +51,8 @@ export const stylePacks = [
   },
   {
     id: "webtoon",
-    name: "条漫韩漫",
-    description: "干净线条、柔和阴影的条漫风格。",
+    name: { en: "Webtoon", zh: "条漫韩漫" },
+    description: { en: "Clean lines with soft shading in a webtoon style.", zh: "干净线条、柔和阴影的条漫风格。" },
     tags: ["webtoon", "clean"],
     sampleImage: "/style-packs/webtoon/sample.svg",
     isActive: true,
@@ -60,8 +62,8 @@ export const stylePacks = [
   },
   {
     id: "western-comic",
-    name: "美漫粗线",
-    description: "强轮廓、漫画质感，线条更有力量。",
+    name: { en: "Western Comic", zh: "美漫粗线" },
+    description: { en: "Bold outlines and dramatic comic shading.", zh: "强轮廓、漫画质感，线条更有力量。" },
     tags: ["comic", "bold lines"],
     sampleImage: "/style-packs/western-comic/sample.svg",
     isActive: true,
@@ -71,8 +73,8 @@ export const stylePacks = [
   },
   {
     id: "3d-toon",
-    name: "3D 卡通",
-    description: "柔和光照与立体质感，偏 3D 动画风。",
+    name: { en: "3D Toon", zh: "3D 卡通" },
+    description: { en: "Soft lighting with a 3D animated look and depth.", zh: "柔和光照与立体质感，偏 3D 动画风。" },
     tags: ["3d", "toon"],
     sampleImage: "/style-packs/3d-toon/sample.svg",
     isActive: true,
@@ -82,8 +84,8 @@ export const stylePacks = [
   },
   {
     id: "flat-vector",
-    name: "扁平矢量",
-    description: "几何简化、品牌感强，适合团队头像统一。",
+    name: { en: "Flat Vector", zh: "扁平矢量" },
+    description: { en: "Minimal geometric shapes with a clean brand feel.", zh: "几何简化、品牌感强，适合团队头像统一。" },
     tags: ["vector", "flat"],
     sampleImage: "/style-packs/flat-vector/sample.svg",
     isActive: true,
@@ -93,8 +95,8 @@ export const stylePacks = [
   },
   {
     id: "pixel",
-    name: "像素头像",
-    description: "16/32-bit 像素风，适合游戏与社群头像。",
+    name: { en: "Pixel Avatar", zh: "像素头像" },
+    description: { en: "16/32-bit pixel art style, great for gaming communities.", zh: "16/32-bit 像素风，适合游戏与社群头像。" },
     tags: ["pixel", "retro"],
     sampleImage: "/style-packs/pixel/sample.svg",
     isActive: true,
@@ -104,8 +106,8 @@ export const stylePacks = [
   },
   {
     id: "watercolor",
-    name: "水彩插画",
-    description: "纸纹与柔和晕染的水彩插画风。",
+    name: { en: "Watercolor", zh: "水彩插画" },
+    description: { en: "Soft watercolor wash with paper texture and gentle blends.", zh: "纸纹与柔和晕染的水彩插画风。" },
     tags: ["watercolor", "illustration"],
     sampleImage: "/style-packs/watercolor/sample.svg",
     isActive: true,
@@ -115,8 +117,8 @@ export const stylePacks = [
   },
   {
     id: "clay",
-    name: "粘土定格",
-    description: "粘土材质、手作感的定格动画风格。",
+    name: { en: "Clay Stop-motion", zh: "粘土定格" },
+    description: { en: "Handcrafted clay texture with a stop-motion vibe.", zh: "粘土材质、手作感的定格动画风格。" },
     tags: ["clay", "stop motion"],
     sampleImage: "/style-packs/clay/sample.svg",
     isActive: true,
@@ -135,4 +137,12 @@ export function getActiveStylePacks(): StylePack[] {
 
 export function getStylePackById(id: string): StylePack | undefined {
   return stylePacks.find((pack) => pack.id === id)
+}
+
+export function getStylePackName(pack: StylePack, locale: Locale): string {
+  return pack.name[locale]
+}
+
+export function getStylePackDescription(pack: StylePack, locale: Locale): string {
+  return pack.description[locale]
 }

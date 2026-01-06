@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
+import { useI18n } from "@/components/i18n-provider"
 import { cn } from "@/lib/utils"
-import { getActiveStylePacks, getStylePackById, type StylePackId } from "@/lib/style-packs"
+import { getActiveStylePacks, getStylePackById, getStylePackDescription, getStylePackName, type StylePackId } from "@/lib/style-packs"
 import { CreateJobResponseSchema } from "@/lib/jobs"
 import { BillingStatusResponseSchema, type BillingStatusResponse } from "@/lib/billing"
 import {
@@ -22,17 +23,18 @@ import {
   isAllowedUploadMimeType,
 } from "@/lib/images"
 
-async function fetchBillingStatus(): Promise<BillingStatusResponse> {
+async function fetchBillingStatus(opts: { fallbackErrorMessage: string }): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status", { cache: "no-store" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "获取订阅状态失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   return BillingStatusResponseSchema.parse(json)
 }
 
 export function CreateForm() {
+  const { locale, t } = useI18n()
   const searchParams = useSearchParams()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -54,14 +56,15 @@ export function CreateForm() {
     let cancelled = false
 
     const run = async () => {
+      setBillingLoading(true)
       try {
-        const next = await fetchBillingStatus()
+        const next = await fetchBillingStatus({ fallbackErrorMessage: t("create.form.error.billingStatusFailed") })
         if (cancelled) return
         setBillingStatus(next)
         setBillingError(null)
       } catch (err) {
         if (cancelled) return
-        setBillingError(err instanceof Error ? err.message : "获取订阅状态失败")
+        setBillingError(err instanceof Error ? err.message : t("create.form.error.billingStatusFailed"))
       } finally {
         if (!cancelled) setBillingLoading(false)
       }
@@ -72,7 +75,7 @@ export function CreateForm() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     const styleFromQuery = searchParams.get("style")
@@ -104,11 +107,11 @@ export function CreateForm() {
 
   const handleImageUpload = (file: File) => {
     if (!isAllowedUploadMimeType(file.type)) {
-      setError(`请上传 ${allowedUploadTypeLabel()} 图片`)
+      setError(t("create.form.error.invalidType", { types: allowedUploadTypeLabel() }))
       return
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError("图片过大，请上传不超过 10MB 的图片")
+      setError(t("create.form.error.tooLarge"))
       return
     }
 
@@ -151,16 +154,16 @@ export function CreateForm() {
   const onGenerate = async () => {
     if (!selectedStyleId) return
     if (!uploadedFile && !sourceJobId) {
-      setError("请上传图片或从历史任务复用照片")
+      setError(t("create.form.error.needImage"))
       return
     }
 
     if (billingLoading) {
-      setError("正在检查订阅状态，请稍后重试")
+      setError(t("create.form.error.billingChecking"))
       return
     }
     if (!canCreateJob) {
-      setError(billingStatus?.createBlockedReason ?? "当前状态不可创建任务")
+      setError(billingStatus?.createBlockedReason ?? t("create.form.error.cannotCreate"))
       return
     }
 
@@ -177,36 +180,38 @@ export function CreateForm() {
       const res = await fetch("/api/jobs", { method: "POST", body: formData })
       const json = await res.json().catch(() => null)
       if (!res.ok) {
-        const message = typeof json?.error === "string" ? json.error : "创建任务失败，请稍后重试"
+        const message = typeof json?.error === "string" ? json.error : t("create.form.error.createFailed")
         throw new Error(message)
       }
 
       const data = CreateJobResponseSchema.parse(json)
       router.push(`/jobs/${data.jobId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "创建任务失败，请稍后重试")
+      setError(err instanceof Error ? err.message : t("create.form.error.createFailed"))
     } finally {
       setSubmitting(false)
     }
   }
 
+  const selectedStyleName = selectedPack ? getStylePackName(selectedPack, locale) : t("create.form.selection.none")
+
   return (
     <div className="space-y-8">
       <Alert>
         <ImageIcon className="h-4 w-4" />
-        <AlertTitle>上传建议</AlertTitle>
+        <AlertTitle>{t("create.form.uploadTips.title")}</AlertTitle>
         <AlertDescription>
-          <p>正脸、无遮挡、光线充足；面部占画面比例适中。</p>
+          <p>{t("create.form.uploadTips.body")}</p>
         </AlertDescription>
       </Alert>
 
       <section className="bg-card border border-border rounded-3xl p-6 sm:p-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">1) 上传自拍</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">{t("create.form.step1")}</h2>
 
         {sourceJobId && !uploadedFile ? (
           <Alert className="mb-4">
-            <AlertTitle>复用照片</AlertTitle>
-            <AlertDescription>将复用任务 {sourceJobId} 的上传照片；如需更换请重新上传。</AlertDescription>
+            <AlertTitle>{t("create.form.reuse.title")}</AlertTitle>
+            <AlertDescription>{t("create.form.reuse.body", { jobId: sourceJobId })}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -222,7 +227,7 @@ export function CreateForm() {
             <div className="relative">
               <img
                 src={uploadedImage}
-                alt="已上传预览"
+                alt={t("create.form.previewAlt")}
                 className="max-h-80 mx-auto rounded-xl object-contain"
               />
               <button
@@ -238,8 +243,10 @@ export function CreateForm() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                 <Upload className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-foreground font-medium mb-2">拖拽图片到这里</p>
-              <p className="text-sm text-muted-foreground mb-4">或点击选择文件（≤ 10MB · {allowedUploadTypeLabel()}）</p>
+              <p className="text-foreground font-medium mb-2">{t("create.form.drop.title")}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t("create.form.drop.subtitle", { types: allowedUploadTypeLabel() })}
+              </p>
 
               <input
                 ref={fileInputRef}
@@ -251,7 +258,7 @@ export function CreateForm() {
               />
               <label htmlFor="avatar-image-upload">
                 <Button variant="outline" className="cursor-pointer bg-transparent" asChild>
-                  <span>选择图片</span>
+                  <span>{t("create.form.chooseImage")}</span>
                 </Button>
               </label>
             </div>
@@ -262,7 +269,7 @@ export function CreateForm() {
       </section>
 
       <section className="bg-card border border-border rounded-3xl p-6 sm:p-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">2) 选择风格包</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">{t("create.form.step2")}</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {packs.map((pack) => {
@@ -278,11 +285,15 @@ export function CreateForm() {
                 )}
               >
                 <div className="aspect-square bg-secondary">
-                  <img src={pack.sampleImage} alt={`${pack.name} 示例图`} className="w-full h-full object-cover" />
+                  <img
+                    src={pack.sampleImage}
+                    alt={t("stylePack.sampleAlt", { name: getStylePackName(pack, locale) })}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="p-4">
-                  <div className="font-semibold text-foreground">{pack.name}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{pack.description}</div>
+                  <div className="font-semibold text-foreground">{getStylePackName(pack, locale)}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{getStylePackDescription(pack, locale)}</div>
                 </div>
               </button>
             )
@@ -291,24 +302,27 @@ export function CreateForm() {
       </section>
 
       <section className="bg-card border border-border rounded-3xl p-6 sm:p-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">3) 微调参数</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">{t("create.form.step3")}</h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-foreground">更像画风 / 更像本人</div>
+            <div className="text-sm font-medium text-foreground">{t("create.form.slider.label")}</div>
             <div className="text-sm text-muted-foreground">
-              画风 {100 - identityStrength}% · 本人 {identityStrength}%
+              {t("create.form.slider.readout", {
+                stylePct: 100 - identityStrength,
+                youPct: identityStrength,
+              })}
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>更像画风</span>
-            <span>更像本人</span>
+            <span>{t("create.form.slider.left")}</span>
+            <span>{t("create.form.slider.right")}</span>
           </div>
           <Slider value={[identityStrength]} onValueChange={([v]) => setIdentityStrength(v)} />
 
           <p className="text-sm text-muted-foreground">
-            当前选择：{selectedPack?.name ?? "未选择"}；本次生成成功后将扣减 1 次（默认产出 4 张）。
-            {billingStatus ? ` 本月剩余 ${billingStatus.usage.quotaRemaining} 次。` : null}
+            {t("create.form.summary", { styleName: selectedStyleName })}
+            {billingStatus ? ` ${t("create.form.remaining", { remaining: billingStatus.usage.quotaRemaining })}` : null}
           </p>
         </div>
       </section>
@@ -318,17 +332,17 @@ export function CreateForm() {
           {billingLoading ? (
             <span className="inline-flex items-center gap-2">
               <Spinner />
-              <span>正在检查订阅状态…</span>
+              <span>{t("create.form.billing.checking")}</span>
             </span>
           ) : billingError ? (
             <span className="text-destructive">{billingError}</span>
           ) : billingStatus?.canCreateJob ? (
-            <span>订阅有效，本月剩余 {billingStatus.usage.quotaRemaining} 次</span>
+            <span>{t("create.form.billing.active", { remaining: billingStatus.usage.quotaRemaining })}</span>
           ) : (
             <span>
-              {billingStatus?.createBlockedReason ?? "订阅有效且额度充足时可创建生成任务"}{" "}
+              {billingStatus?.createBlockedReason ?? t("create.form.billing.subscribeHint")}{" "}
               <Link href="/pricing" className="underline">
-                去订阅
+                {t("create.form.billing.subscribeCta")}
               </Link>
             </span>
           )}
@@ -339,7 +353,7 @@ export function CreateForm() {
           disabled={!canGenerate}
           onClick={onGenerate}
         >
-          {submitting ? "创建任务中…" : "开始生成"}
+          {submitting ? t("create.form.generate.creating") : t("create.form.generate.start")}
         </Button>
       </div>
     </div>

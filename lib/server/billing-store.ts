@@ -14,6 +14,11 @@ const DEFAULT_MONTHLY_QUOTA = (() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 20
 })()
 
+function isProductionDeploy(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production"
+  return process.env.NODE_ENV === "production"
+}
+
 export const SubscriptionStatusSchema = z.enum(["inactive", "active", "canceled", "past_due", "expired"])
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>
 
@@ -238,7 +243,9 @@ export async function getEntitlementForUser(userId: string): Promise<{
   return withStoreLock(async () => {
     const store = await loadStore()
     const now = new Date()
-    const sub = store.subscriptions[userId] ?? null
+    const allowMock = process.env.CREEM_MOCK === "1" || !isProductionDeploy()
+    const subRaw = store.subscriptions[userId] ?? null
+    const sub = !allowMock && subRaw?.provider === "mock" ? null : subRaw
     const status = effectiveSubscriptionStatus(sub, now)
 
     const month = getCurrentMonth(now)

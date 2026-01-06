@@ -5,6 +5,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
+import { useI18n } from "@/components/i18n-provider"
+import { localeToDateLocale } from "@/lib/i18n/locale"
 import {
   BillingCheckoutResponseSchema,
   BillingStatusResponseSchema,
@@ -12,34 +14,35 @@ import {
   type SubscriptionStatus,
 } from "@/lib/billing"
 
-function subscriptionLabel(status: SubscriptionStatus) {
+function subscriptionLabel(status: SubscriptionStatus, t: (key: any) => string) {
   switch (status) {
     case "active":
-      return "已订阅（有效）"
+      return t("billing.subscription.active")
     case "canceled":
-      return "已取消（到期前仍可用）"
+      return t("billing.subscription.canceled")
     case "past_due":
-      return "扣款失败/已暂停"
+      return t("billing.subscription.past_due")
     case "expired":
-      return "已过期"
+      return t("billing.subscription.expired")
     case "inactive":
-      return "未订阅"
+      return t("billing.subscription.inactive")
     default:
-      return "未订阅"
+      return t("billing.subscription.inactive")
   }
 }
 
-async function fetchStatus(): Promise<BillingStatusResponse> {
+async function fetchStatus(opts: { fallbackErrorMessage: string }): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status", { cache: "no-store" })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    const message = typeof json?.error === "string" ? json.error : "获取订阅状态失败"
+    const message = typeof json?.error === "string" ? json.error : opts.fallbackErrorMessage
     throw new Error(message)
   }
   return BillingStatusResponseSchema.parse(json)
 }
 
 export function PricingClient() {
+  const { locale, t } = useI18n()
   const [status, setStatus] = useState<BillingStatusResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -48,14 +51,15 @@ export function PricingClient() {
   useEffect(() => {
     let cancelled = false
     const run = async () => {
+      setLoading(true)
       try {
-        const next = await fetchStatus()
+        const next = await fetchStatus({ fallbackErrorMessage: t("pricing.client.error.fetchFailed") })
         if (cancelled) return
         setStatus(next)
         setError(null)
       } catch (err) {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : "获取订阅状态失败")
+        setError(err instanceof Error ? err.message : t("pricing.client.error.fetchFailed"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -65,7 +69,7 @@ export function PricingClient() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   const onSubscribe = async () => {
     setActionLoading(true)
@@ -78,7 +82,7 @@ export function PricingClient() {
       })
       const json = await res.json().catch(() => null)
       if (!res.ok) {
-        const message = typeof json?.error === "string" ? json.error : "创建订阅失败"
+        const message = typeof json?.error === "string" ? json.error : t("pricing.client.error.checkoutFailed")
         throw new Error(message)
       }
 
@@ -88,10 +92,10 @@ export function PricingClient() {
         return
       }
 
-      const next = await fetchStatus()
+      const next = await fetchStatus({ fallbackErrorMessage: t("pricing.client.error.fetchFailed") })
       setStatus(next)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "创建订阅失败")
+      setError(err instanceof Error ? err.message : t("pricing.client.error.checkoutFailed"))
     } finally {
       setActionLoading(false)
     }
@@ -101,36 +105,46 @@ export function PricingClient() {
   const quota = status?.usage
 
   const showSubscribe = subscriptionStatus === "inactive" || subscriptionStatus === "expired" || subscriptionStatus === "past_due"
+  const dateLocale = localeToDateLocale(locale)
 
   return (
     <div className="pb-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>订阅入口</CardTitle>
+            <CardTitle>{t("pricing.client.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             {loading ? (
               <div className="flex items-center gap-2">
                 <Spinner />
-                <span>正在获取订阅状态…</span>
+                <span>{t("pricing.client.loading")}</span>
               </div>
             ) : (
               <div className="space-y-2">
                 <div>
-                  当前状态：<span className="text-foreground">{subscriptionLabel(subscriptionStatus)}</span>
+                  {t("pricing.client.status", { status: subscriptionLabel(subscriptionStatus, t) })}
                 </div>
                 {status?.subscription?.currentPeriodEnd ? (
-                  <div>到期时间：{new Date(status.subscription.currentPeriodEnd).toLocaleString()}</div>
+                  <div>
+                    {t("pricing.client.periodEnd", {
+                      time: new Date(status.subscription.currentPeriodEnd).toLocaleString(dateLocale),
+                    })}
+                  </div>
                 ) : null}
                 {quota ? (
                   <div>
-                    本月额度：{quota.quotaUsed}/{quota.quotaTotal}（剩余 {quota.quotaRemaining}）
+                    {t("pricing.client.quota", {
+                      used: quota.quotaUsed,
+                      total: quota.quotaTotal,
+                      remaining: quota.quotaRemaining,
+                    })}
                   </div>
                 ) : null}
                 {status?.activeJobId ? (
                   <div>
-                    进行中任务：<Link href={`/jobs/${status.activeJobId}`}>{status.activeJobId}</Link>
+                    {t("pricing.client.activeJobLabel")}{" "}
+                    <Link href={`/jobs/${status.activeJobId}`}>{status.activeJobId}</Link>
                   </div>
                 ) : null}
               </div>
@@ -145,16 +159,16 @@ export function PricingClient() {
                 disabled={!showSubscribe || actionLoading}
               >
                 {actionLoading ? <Spinner className="mr-2" /> : null}
-                {showSubscribe ? "开通订阅" : "已订阅"}
+                {showSubscribe ? t("pricing.client.subscribe") : t("pricing.client.subscribed")}
               </Button>
 
               <Button variant="outline" className="bg-transparent" asChild>
-                <Link href="/create">去创建页</Link>
+                <Link href="/create">{t("pricing.client.toCreate")}</Link>
               </Button>
             </div>
 
             <div className="text-xs">
-              未配置 Creem 时将使用 mock 订阅（设置 `CREEM_API_KEY` + `CREEM_WEBHOOK_SECRET` + `CREEM_PRODUCT_ID` 可接入真实流程）。
+              {t("pricing.client.note")}
             </div>
           </CardContent>
         </Card>

@@ -20,6 +20,11 @@ import { trackEvent } from "@/lib/server/telemetry"
 
 export const runtime = "nodejs"
 
+function isProductionDeploy(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production"
+  return process.env.NODE_ENV === "production"
+}
+
 function parseLimit(req: Request): number {
   const url = new URL(req.url)
   const raw = url.searchParams.get("limit")
@@ -108,6 +113,10 @@ export async function POST(req: Request) {
 
   const identityStrength = z.number().int().min(0).max(100).catch(30).parse(identityStrengthRaw ?? 30)
   const provider = pickProvider()
+  if (provider === "mock" && process.env.OPENROUTER_MOCK !== "1" && isProductionDeploy()) {
+    trackEvent("job.create_blocked", { userId, reason: "openrouter_unconfigured" })
+    return NextResponse.json({ error: "未配置 OPENROUTER_API_KEY，无法开始生成" }, { status: 500 })
+  }
 
   if (image instanceof File) {
     if (!isAllowedUploadMimeType(image.type)) {
