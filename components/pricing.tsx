@@ -9,6 +9,9 @@ import { useI18n } from "@/components/i18n-provider"
 export function Pricing() {
   const { t } = useI18n()
 
+  const monthlyPrice = process.env.NEXT_PUBLIC_PLAN_MONTHLY_PRICE?.trim() ?? null
+  const monthlyQuota = process.env.NEXT_PUBLIC_PLAN_MONTHLY_QUOTA?.trim() ?? null
+
   const planFeatures = [
     t("pricing.plan.feature1"),
     t("pricing.plan.feature2"),
@@ -35,6 +38,19 @@ export function Pricing() {
             <CardHeader>
               <CardTitle>{t("pricing.plan.title")}</CardTitle>
               <CardDescription>{t("pricing.plan.subtitle")}</CardDescription>
+              {monthlyPrice ? (
+                <div className="pt-3">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-4xl font-bold text-foreground">{monthlyPrice}</div>
+                    <div className="text-sm text-muted-foreground">{t("pricing.plan.perMonth")}</div>
+                  </div>
+                  {monthlyQuota ? (
+                    <div className="pt-2 text-sm text-muted-foreground">
+                      {t("pricing.plan.quota", { quota: monthlyQuota })}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
