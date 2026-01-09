@@ -4,13 +4,7 @@ import Link from "next/link"
 import { Sparkles, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/components/i18n-provider"
-
-function getSupportEmail(): string | null {
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim()
-  if (!email) return null
-  if (!email.includes("@")) return null
-  return email
-}
+import { getSupportEmail } from "@/lib/support"
 
 export function Footer() {
   const { t } = useI18n()
@@ -48,15 +42,13 @@ export function Footer() {
               <p className="text-sm text-muted-foreground mb-4">
                 {t("footer.tagline")}
               </p>
-              {supportEmail ? (
-                <a
-                  href={`mailto:${supportEmail}`}
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                  <span>{supportEmail}</span>
-                </a>
-              ) : null}
+              <a
+                href={`mailto:${supportEmail}`}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                <span>{supportEmail}</span>
+              </a>
             </div>
 
             {/* Products */}
@@ -117,6 +109,11 @@ export function Footer() {
                     {t("footer.link.cookies")}
                   </Link>
                 </li>
+                <li>
+                  <Link href="/refund" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    {t("footer.link.refund")}
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -135,6 +132,9 @@ export function Footer() {
               </Link>
               <Link href="/cookies" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.link.cookies")}
+              </Link>
+              <Link href="/refund" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                {t("footer.link.refund")}
               </Link>
             </div>
           </div>

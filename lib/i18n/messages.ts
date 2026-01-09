@@ -100,6 +100,7 @@ export const messagesEn = {
   "footer.link.privacy": "Privacy",
   "footer.link.terms": "Terms",
   "footer.link.cookies": "Cookies",
+  "footer.link.refund": "Refund Policy",
 
   "common.loading": "Loading…",
   "common.backHome": "Back to home",
@@ -359,6 +360,7 @@ export const messagesZh: Messages = {
   "footer.link.privacy": "隐私",
   "footer.link.terms": "条款",
   "footer.link.cookies": "Cookie",
+  "footer.link.refund": "退款政策",
 
   "common.loading": "加载中…",
   "common.backHome": "返回首页",

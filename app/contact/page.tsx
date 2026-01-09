@@ -6,13 +6,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/components/i18n-provider"
-
-function getSupportEmail(): string | null {
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim()
-  if (!email) return null
-  if (!email.includes("@")) return null
-  return email
-}
+import { getSupportEmail } from "@/lib/support"
 
 export default function ContactPage() {
   const { locale, t } = useI18n()
@@ -38,15 +32,11 @@ export default function ContactPage() {
               <CardTitle>{isZh ? "客服邮箱" : "Support email"}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-3">
-              {supportEmail ? (
-                <div>
-                  <a className="underline" href={`mailto:${supportEmail}`}>
-                    {supportEmail}
-                  </a>
-                </div>
-              ) : (
-                <div>{isZh ? "暂未提供客服邮箱。" : "Support email is not available."}</div>
-              )}
+              <div>
+                <a className="underline" href={`mailto:${supportEmail}`}>
+                  {supportEmail}
+                </a>
+              </div>
 
               <div>
                 <Link className="underline" href="/privacy">
@@ -59,6 +49,10 @@ export default function ContactPage() {
                 {" · "}
                 <Link className="underline" href="/cookies">
                   {isZh ? "Cookie 政策" : "Cookie Policy"}
+                </Link>
+                {" · "}
+                <Link className="underline" href="/refund">
+                  {isZh ? "退款政策" : "Refund Policy"}
                 </Link>
               </div>
             </CardContent>
@@ -78,4 +72,3 @@ export default function ContactPage() {
     </div>
   )
 }
-

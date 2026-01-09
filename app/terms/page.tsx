@@ -4,13 +4,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/components/i18n-provider"
-
-function getSupportEmail(): string | null {
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim()
-  if (!email) return null
-  if (!email.includes("@")) return null
-  return email
-}
+import { getSupportEmail } from "@/lib/support"
 
 type Section = {
   title: string
@@ -69,9 +63,7 @@ export default function TermsPage() {
         {
           title: "联系我们",
           paragraphs: [
-            supportEmail
-              ? `如对条款或订阅有疑问，请联系：${supportEmail}`
-              : "如对条款或订阅有疑问，请通过站内联系方式与我们联系。",
+            `如对条款或订阅有疑问，请联系：${supportEmail}`,
           ],
         },
       ]
@@ -115,7 +107,7 @@ export default function TermsPage() {
         },
         {
           title: "Contact",
-          paragraphs: [supportEmail ? `Questions? Contact us at ${supportEmail}.` : "Questions? Contact us via the website contact information."],
+          paragraphs: [`Questions? Contact us at ${supportEmail}.`],
         },
       ]
 
@@ -170,4 +162,3 @@ export default function TermsPage() {
     </div>
   )
 }
-
