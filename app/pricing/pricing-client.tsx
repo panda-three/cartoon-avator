@@ -167,9 +167,6 @@ export function PricingClient() {
               </Button>
             </div>
 
-            <div className="text-xs">
-              {t("pricing.client.note")}
-            </div>
           </CardContent>
         </Card>
       </div>

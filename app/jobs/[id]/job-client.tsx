@@ -179,7 +179,9 @@ export function JobClient({ jobId }: Props) {
             {job ? (
               <span className="text-xs text-muted-foreground">{t("job.status.attempt", { attempt: job.attempt })}</span>
             ) : null}
-            {job?.provider === "mock" ? <span className="text-xs text-muted-foreground">mock</span> : null}
+            {job?.provider === "mock" ? (
+              <span className="text-xs text-muted-foreground">{t("job.mock.badge")}</span>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2">

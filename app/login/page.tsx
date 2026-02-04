@@ -1,14 +1,18 @@
 "use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/components/i18n-provider"
+import { loginWithGoogle } from "@/app/login/actions"
 
 export default function LoginPage() {
   const { t } = useI18n()
+  const searchParams = useSearchParams()
+  const next = searchParams.get("next") ?? "/create"
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,7 +28,15 @@ export default function LoginPage() {
             <CardHeader>
               <CardTitle>{t("login.card.title")}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">{t("login.card.body")}</CardContent>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">{t("login.card.body")}</p>
+              <form action={loginWithGoogle}>
+                <input type="hidden" name="next" defaultValue={next} />
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {t("login.cta.google")}
+                </Button>
+              </form>
+            </CardContent>
           </Card>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">

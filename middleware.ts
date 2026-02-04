@@ -1,18 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale"
+import { updateSession } from "@/lib/supabase/middleware"
+import { hasSupabaseEnv } from "@/lib/supabase/env"
 
 const USER_ID_COOKIE = "zl_uid"
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const existing = req.cookies.get(USER_ID_COOKIE)?.value
   const existingLocale = req.cookies.get(LOCALE_COOKIE)?.value
 
   const hasUid = Boolean(existing)
   const hasValidLocale = isLocale(existingLocale)
 
-  if (hasUid && hasValidLocale) return NextResponse.next()
-
-  const res = NextResponse.next()
+  const res = hasSupabaseEnv() ? await updateSession(req) : NextResponse.next()
 
   if (!hasUid) {
     res.cookies.set({
