@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script"
 import { cookies } from "next/headers"
 import { I18nProvider } from "@/components/i18n-provider"
 import { getMessages } from "@/lib/i18n/messages"
@@ -47,6 +48,20 @@ export default async function RootLayout({
 
   return (
     <html lang={localeToHtmlLang(locale)} className="dark">
+      <head>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-73KTT5BHHZ"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-73KTT5BHHZ');`}
+        </Script>
+      </head>
       <body className={`font-sans antialiased`}>
         <I18nProvider locale={locale} messages={messages}>
           {children}
