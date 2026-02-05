@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
             "账户信息：如邮箱等用于登录/识别的基本信息",
             "你上传的图片与生成结果：用于完成生成任务与提供下载",
             "使用数据：例如生成任务状态、用量/额度、错误日志（用于改进稳定性与排查问题）",
-            "支付相关信息：由 Creem 处理；我们不会直接存储你的银行卡信息",
+            "支付相关信息：由 PayPal 处理；我们不会直接存储你的银行卡信息",
           ],
         },
         {
@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
           ],
           bullets: [
             "图片生成：通过 OpenRouter 调用模型服务以完成生成任务",
-            "支付与订阅：通过 Creem 处理支付与订阅状态",
+            "支付与订阅：通过 PayPal 处理支付与订阅状态",
             "基础设施：托管、存储与日志服务（用于提供网站与稳定性）",
           ],
         },
@@ -80,7 +80,7 @@ export default function PrivacyPolicyPage() {
             "Account info: basic identifiers such as email for sign-in",
             "Uploaded images and generated outputs: to run jobs and enable downloads",
             "Usage data: job status, quota/usage, and error logs for reliability and debugging",
-            "Payment info: processed by Creem; we do not store your card details directly",
+            "Payment info: processed by PayPal; we do not store your card details directly",
           ],
         },
         {
@@ -105,7 +105,7 @@ export default function PrivacyPolicyPage() {
           paragraphs: ["We may share necessary data with service providers to deliver the product:"],
           bullets: [
             "Image generation: via OpenRouter to run model inference for your jobs",
-            "Billing: via Creem for payments and subscription status",
+            "Billing: via PayPal for payments and subscription status",
             "Infrastructure: hosting, storage, and logging providers to run the website reliably",
           ],
         },

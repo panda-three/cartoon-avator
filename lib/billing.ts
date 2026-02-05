@@ -3,7 +3,7 @@ import { z } from "zod"
 export const SubscriptionStatusSchema = z.enum(["inactive", "active", "canceled", "past_due", "expired"])
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>
 
-export const SubscriptionProviderSchema = z.enum(["creem", "mock"])
+export const SubscriptionProviderSchema = z.enum(["creem", "mock", "paypal"])
 export type SubscriptionProvider = z.infer<typeof SubscriptionProviderSchema>
 
 export const BillingSubscriptionSchema = z

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { useI18n } from "@/components/i18n-provider"
 import { localeToDateLocale } from "@/lib/i18n/locale"
+import type { BillingProvider } from "@/lib/pricing"
 import {
   BillingCheckoutResponseSchema,
   BillingStatusResponseSchema,
@@ -41,12 +42,14 @@ async function fetchStatus(opts: { fallbackErrorMessage: string }): Promise<Bill
   return BillingStatusResponseSchema.parse(json)
 }
 
-export function PricingClient() {
+export function PricingClient({ refreshKey, billingProvider }: { refreshKey?: number; billingProvider?: BillingProvider }) {
   const { locale, t } = useI18n()
   const [status, setStatus] = useState<BillingStatusResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const paypalConfigured = Boolean(process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID)
+  const activeProvider = billingProvider ?? (paypalConfigured ? "paypal" : "creem")
 
   useEffect(() => {
     let cancelled = false
@@ -69,7 +72,7 @@ export function PricingClient() {
     return () => {
       cancelled = true
     }
-  }, [t])
+  }, [refreshKey, t])
 
   const onSubscribe = async () => {
     setActionLoading(true)
@@ -104,7 +107,10 @@ export function PricingClient() {
   const subscriptionStatus = status?.subscription?.status ?? "inactive"
   const quota = status?.usage
 
-  const showSubscribe = subscriptionStatus === "inactive" || subscriptionStatus === "expired" || subscriptionStatus === "past_due"
+  const isSubscribed = subscriptionStatus === "active" || subscriptionStatus === "canceled"
+  const usePayPal = activeProvider === "paypal" && paypalConfigured
+  const showSubscribe =
+    !usePayPal && (subscriptionStatus === "inactive" || subscriptionStatus === "expired" || subscriptionStatus === "past_due")
   const dateLocale = localeToDateLocale(locale)
 
   return (
@@ -152,15 +158,29 @@ export function PricingClient() {
 
             {error ? <div className="text-destructive">{error}</div> : null}
 
+            {usePayPal && !isSubscribed ? (
+              <div className="text-sm text-muted-foreground">{t("pricing.client.paypalHint")}</div>
+            ) : null}
+
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              <Button
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                onClick={onSubscribe}
-                disabled={!showSubscribe || actionLoading}
-              >
-                {actionLoading ? <Spinner className="mr-2" /> : null}
-                {showSubscribe ? t("pricing.client.subscribe") : t("pricing.client.subscribed")}
-              </Button>
+              {showSubscribe ? (
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={onSubscribe}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <Spinner className="mr-2" /> : null}
+                  {t("pricing.client.subscribe")}
+                </Button>
+              ) : isSubscribed ? (
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
+                  {t("pricing.client.subscribed")}
+                </Button>
+              ) : usePayPal ? (
+                <Button variant="outline" className="bg-transparent" asChild>
+                  <a href="#plans">{t("pricing.client.choosePlan")}</a>
+                </Button>
+              ) : null}
 
               <Button variant="outline" className="bg-transparent" asChild>
                 <Link href="/create">{t("pricing.client.toCreate")}</Link>

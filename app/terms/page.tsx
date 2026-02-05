@@ -28,8 +28,8 @@ export default function TermsPage() {
         {
           title: "订阅与付款",
           paragraphs: [
-            "订阅为按月自动续费，具体价格与权益以订阅页显示为准。",
-            "支付与订阅状态由 Creem 处理。你应确保付款方式有效；如扣款失败，订阅可能暂停或失效。",
+            "订阅按周期计费（按月/按年），具体价格与权益以订阅页显示为准。",
+            "支付与订阅状态由 PayPal 处理。你应确保付款方式有效；如扣款失败，订阅可能暂停或失效。",
           ],
         },
         {
@@ -77,8 +77,8 @@ export default function TermsPage() {
         {
           title: "Subscription and billing",
           paragraphs: [
-            "Subscriptions auto-renew monthly. Pricing and benefits are shown on the pricing page.",
-            "Payments and subscription status are processed by Creem. If payment fails, your subscription may be paused or become inactive.",
+            "Subscriptions are billed by period (monthly or yearly). Pricing and benefits are shown on the pricing page.",
+            "Payments and subscription status are processed by PayPal. If payment fails, your subscription may be paused or become inactive.",
           ],
         },
         {

@@ -22,7 +22,7 @@ function isProductionDeploy(): boolean {
 export const SubscriptionStatusSchema = z.enum(["inactive", "active", "canceled", "past_due", "expired"])
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>
 
-const SubscriptionProviderSchema = z.enum(["creem", "mock"])
+const SubscriptionProviderSchema = z.enum(["creem", "mock", "paypal"])
 export type SubscriptionProvider = z.infer<typeof SubscriptionProviderSchema>
 
 const SubscriptionRecordSchema = z.object({

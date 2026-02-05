@@ -30,9 +30,9 @@ export default function RefundPolicyPage() {
         {
           title: "订阅与取消",
           paragraphs: [
-            "订阅按月自动续费，除非你在下一个账单周期前取消。",
-            "取消后将不再续费，你仍可使用已购买周期内的服务权益，直至当期结束。",
-            "支付由 Creem 处理；退款将退回原支付方式。",
+            "订阅按周期计费，到期前可续订以保持服务。",
+            "如不续订，将不再扣款，你仍可使用已购买周期内的服务权益，直至当期结束。",
+            "支付由 PayPal 处理；退款将退回原支付方式。",
           ],
         },
         {
@@ -48,7 +48,7 @@ export default function RefundPolicyPage() {
         {
           title: "如何申请退款",
           paragraphs: ["请发送邮件至客服邮箱，并提供以下信息以便我们尽快处理："],
-          bullets: ["你的账号邮箱", "Creem 订单/交易号（如有）", "退款原因与相关说明（截图/时间等）"],
+          bullets: ["你的账号邮箱", "PayPal 订单/交易号（如有）", "退款原因与相关说明（截图/时间等）"],
         },
         {
           title: "处理时效",
@@ -69,9 +69,9 @@ export default function RefundPolicyPage() {
         {
           title: "Subscriptions and cancellation",
           paragraphs: [
-            "Subscriptions auto-renew monthly unless canceled before the next billing date.",
-            "After cancellation, you won’t be charged again and you can keep using the service until the end of the current billing period.",
-            "Payments are processed by Creem; approved refunds are returned to the original payment method.",
+            "Subscriptions are billed by period. Renew before the next billing date to keep access.",
+            "If you choose not to renew, you won’t be charged again and you can keep using the service until the end of the current billing period.",
+            "Payments are processed by PayPal; approved refunds are returned to the original payment method.",
           ],
         },
         {
@@ -87,7 +87,7 @@ export default function RefundPolicyPage() {
         {
           title: "How to request a refund",
           paragraphs: ["Email our support address with the following details:"],
-          bullets: ["Your account email", "Creem order/transaction ID (if available)", "Reason for the request and any supporting context (screenshots/timestamps)"],
+          bullets: ["Your account email", "PayPal order/transaction ID (if available)", "Reason for the request and any supporting context (screenshots/timestamps)"],
         },
         {
           title: "Processing time",
@@ -149,4 +149,3 @@ export default function RefundPolicyPage() {
     </div>
   )
 }
-
