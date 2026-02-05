@@ -18,6 +18,8 @@ declare global {
   }
 }
 
+const PAYPAL_SDK_EVENT = "paypal-sdk-loaded"
+
 type PayPalCheckoutProps = {
   planId: string
   interval: BillingInterval
@@ -35,8 +37,16 @@ export function PayPalCheckout({ planId, interval, className, onSuccess }: PayPa
   const [rendering, setRendering] = useState(false)
 
   useEffect(() => {
+    const handleReady = () => setSdkReady(true)
+
     if (window.paypal?.Buttons) {
       setSdkReady(true)
+      return
+    }
+
+    window.addEventListener(PAYPAL_SDK_EVENT, handleReady)
+    return () => {
+      window.removeEventListener(PAYPAL_SDK_EVENT, handleReady)
     }
   }, [])
 
@@ -131,7 +141,10 @@ export function PayPalCheckout({ planId, interval, className, onSuccess }: PayPa
         id="paypal-sdk"
         src={scriptSrc}
         strategy="afterInteractive"
-        onLoad={() => setSdkReady(true)}
+        onLoad={() => {
+          setSdkReady(true)
+          window.dispatchEvent(new Event(PAYPAL_SDK_EVENT))
+        }}
         onError={() => setError(t("pricing.paypal.error.load"))}
       />
       {!sdkReady || rendering ? (
