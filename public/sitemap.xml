@@ -13,63 +13,53 @@
   <priority>1.00</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/login</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/anime-line</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/anime-cel</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=anime-line</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/chibi</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=anime-cel</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/webtoon</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=chibi</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/western-comic</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=webtoon</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/3d-toon</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=western-comic</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/flat-vector</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=3d-toon</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/pixel</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=flat-vector</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/watercolor</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.zltest.online/create?style=pixel</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://www.zltest.online/create?style=watercolor</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://www.zltest.online/create?style=clay</loc>
-  <lastmod>2026-01-10T14:22:34+00:00</lastmod>
+  <loc>https://www.zltest.online/styles/clay</loc>
+  <lastmod>2026-02-05T00:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>

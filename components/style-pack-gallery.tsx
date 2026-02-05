@@ -38,7 +38,14 @@ export function StylePackGallery() {
               </div>
 
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl">{getStylePackName(pack, locale)}</CardTitle>
+                <CardTitle className="text-xl">
+                  <Link
+                    href={`/styles/${pack.id}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {getStylePackName(pack, locale)}
+                  </Link>
+                </CardTitle>
                 <CardDescription>{getStylePackDescription(pack, locale)}</CardDescription>
               </CardHeader>
 
@@ -51,11 +58,16 @@ export function StylePackGallery() {
               </CardContent>
 
               <CardFooter className="border-t">
-                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  <Link href={`/create?style=${pack.id}`}>
-                    {t("styles.useStyle")} <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="flex w-full flex-col gap-3 sm:flex-row">
+                  <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Link href={`/create?style=${pack.id}`}>
+                      {t("styles.useStyle")} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1 border-border text-foreground bg-transparent">
+                    <Link href={`/styles/${pack.id}`}>{t("styles.learnMore")}</Link>
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           ))}
